@@ -4,6 +4,7 @@
 - Você poderá modificar a marcação e estilos da aplicação depois. No momento, concentre-se em executar o que descreverei abaixo;
 
 - **Quando a página for carregada**: 
+
 - Popule os <select> com tags <option> que contém as moedas que podem ser
   convertidas. "BRL" para real brasileiro, "EUR" para euro, "USD" para 
   dollar dos Estados Unidos, etc.
