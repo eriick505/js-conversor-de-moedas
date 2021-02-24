@@ -19,7 +19,9 @@ const state = (() => {
   }
 })()
 
-const getUrl = currency => `https://v6.exchangerate-api.com/v6/YOUR_API_HERE/latest/${currency}`
+const apiKey = 'your_key_here'
+
+const getUrl = currency => `https://v6.exchangerate-api.com/v6/${apiKey}/latest/${currency}`
 
 const getErrorMessage = errorType => ({
   "unsupported-code": 'A moeda não existe em nosso banco de dados.',
@@ -41,9 +43,9 @@ const showErrorMessage = err => {
   button.setAttribute('type', 'button')
   button.setAttribute('aria-label', 'close')
 
-  button.addEventListener('click', () => {
-    div.remove()
-  })
+  const removeDiv = () => div.remove()
+
+  button.addEventListener('click', removeDiv)
 
   div.appendChild(button)
   currenciesEl.insertAdjacentElement('afterend', div)
@@ -54,9 +56,7 @@ const fetchExchangeRate = async url => {
     const response = await fetch(url)
 
     if(!response.ok) {
-      throw new Error(showErrorMessage({ 
-        message: 'Sua conexão falhou. Não foi possível obter as informações.',
-      }))
+      throw new Error('Sua conexão falhou. Não foi possível obter as informações.')
     }
 
     const exchangeRateData = await response.json()
@@ -71,12 +71,20 @@ const fetchExchangeRate = async url => {
   }
 }
 
-const init = async () => {
-  const exchangeRateData = await fetchExchangeRate(getUrl('USD'))
-  const exchangeRate = state.setExchangeRate({ ...exchangeRateData })
+const updateCurrencyValues = ({ conversion_rates }) => {
+  const currencyTwoElValue = conversion_rates[currencyTwoEl.value]
 
-  if(exchangeRate.conversion_rates) {
-    const getOptions = selectedCurrency => Object.keys(exchangeRate.conversion_rates)
+  convertedValueEl.textContent = (timesCurrencyOneEl.value * currencyTwoElValue).toFixed(2)
+  valuePrecisionEl.textContent = `1 ${currencyOneEl.value} = ${1 * currencyTwoElValue} ${currencyTwoEl.value}`
+}
+
+const init = async () => {
+  const url = getUrl('USD')
+  const exchangeRateData = await fetchExchangeRate(url)
+  const { conversion_rates } = state.setExchangeRate({ ...exchangeRateData })
+
+  if(conversion_rates) {
+    const getOptions = selectedCurrency => Object.keys(conversion_rates)
       .map(currency => `
         <option ${currency === selectedCurrency ? 'selected' : ''}>${currency}</option>
       `)
@@ -85,31 +93,30 @@ const init = async () => {
     currencyOneEl.innerHTML = getOptions('USD')
     currencyTwoEl.innerHTML = getOptions('BRL')
   
-    convertedValueEl.textContent = exchangeRate.conversion_rates.BRL.toFixed(2)
-    valuePrecisionEl.textContent = `1 USD = ${exchangeRate.conversion_rates.BRL} BRL`
+    updateCurrencyValues({ conversion_rates })
   }
 }
 
-const updateCurrencyValues = exchangeRate => {
-  convertedValueEl.textContent = (timesCurrencyOneEl.value * exchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(2)
-  valuePrecisionEl.textContent = `1 ${currencyOneEl.value} = ${1 * exchangeRate.conversion_rates[currencyTwoEl.value]} ${currencyTwoEl.value}`
-}
-
-currencyOneEl.addEventListener('input', async e => {
-  const exchangeRateData = await fetchExchangeRate(getUrl(e.target.value))
+const handleWithCurrencyOneEl = async () => {
+  const url = getUrl(currencyOneEl.value)
+  const exchangeRateData = await fetchExchangeRate(url)
   const exchangeRate = state.setExchangeRate({ ...exchangeRateData })
 
   updateCurrencyValues(exchangeRate)
-})
+}
 
-currencyTwoEl.addEventListener('input', () => {
+const handleWithCurrencyTwoEl = () => {
   const exchangeRate = state.getExchangeRate()
   updateCurrencyValues(exchangeRate)
-})
+}
 
-timesCurrencyOneEl.addEventListener('input', e => {
+const handleWithTimesCurrencyOneEl = () => {
   const exchangeRateTwoElValue = state.getExchangeRate().conversion_rates[currencyTwoEl.value]
-  convertedValueEl.textContent = (e.target.value * exchangeRateTwoElValue).toFixed(2)
-})
+  convertedValueEl.textContent = (timesCurrencyOneEl.value * exchangeRateTwoElValue).toFixed(2)
+}
+
+currencyOneEl.addEventListener('input', handleWithCurrencyOneEl)
+currencyTwoEl.addEventListener('input', handleWithCurrencyTwoEl)
+timesCurrencyOneEl.addEventListener('input', handleWithTimesCurrencyOneEl)
 
 init()

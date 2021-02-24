@@ -7,7 +7,7 @@
 
 - Popule os <select> com tags <option> que contém as moedas que podem ser
   convertidas. "BRL" para real brasileiro, "EUR" para euro, "USD" para 
-  dollar dos Estados Unidos, etc.
+  dollar dos Estados Unidos, etc;
 
 - O option selecionado por padrão no 1º <select> deve ser "USD" e o option
   no 2º <select> deve ser "BRL";
